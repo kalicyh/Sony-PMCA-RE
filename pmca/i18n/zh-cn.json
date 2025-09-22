@@ -29,9 +29,6 @@
   "apk_files": "APK 文件",
   "all_files": "所有文件",
   "firmware_files": "固件文件",
-  "applying_tweaks": "正在应用调整...",
-  "no_tweaks_available": "没有可用的调整选项",
-  "restart_required": "请重启应用程序以应用语言更改。",
   "restart_to_apply_changes": "请重新启动应用程序以应用语言更改。",
   "downloading_apk": "正在下载 APK",
   "analyzing_apk": "正在分析 APK",
@@ -50,5 +47,14 @@
   "camera_updater_mode": "{manufacturer} {model} 是处于更新器模式的相机",
   "no_devices_found": "未找到设备。请确保相机已连接。",
   "too_many_devices": "错误：找到太多 Sony 设备。仅支持一台相机。",
-  "camera_mass_storage_mode": "{manufacturer} {model} 是处于大容量存储模式的相机"
+  "camera_mass_storage_mode": "{manufacturer} {model} 是处于大容量存储模式的相机",
+  "export_backup_data": "导出备份数据",
+  "exporting_backup_data": "正在导出备份数据...",
+  "reading_backup_data": "正在读取备份数据...",
+  "json_files": "JSON 文件",
+  "save_backup_data": "保存备份数据",
+  "saving_backup_file": "正在保存备份文件...",
+  "backup_export_success": "备份数据导出成功：{filename}",
+  "total_properties_exported": "已导出属性总数：{count}",
+  "export_cancelled": "导出已取消"
 }

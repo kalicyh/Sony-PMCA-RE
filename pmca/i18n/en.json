@@ -46,5 +46,14 @@
   "camera_updater_mode": "{manufacturer} {model} is a camera in updater mode",
   "no_devices_found": "No devices found. Please make sure that the camera is connected.",
   "too_many_devices": "Error: Too many Sony devices found. Only one camera is supported.",
-  "camera_mass_storage_mode": "{manufacturer} {model} is a camera in mass storage mode"
+  "camera_mass_storage_mode": "{manufacturer} {model} is a camera in mass storage mode",
+  "export_backup_data": "Export Backup Data",
+  "exporting_backup_data": "Exporting backup data...",
+  "reading_backup_data": "Reading backup data...",
+  "json_files": "JSON files",
+  "save_backup_data": "Save Backup Data",
+  "saving_backup_file": "Saving backup file...",
+  "backup_export_success": "Backup exported successfully as {filename}",
+  "total_properties_exported": "Total properties exported: {count}",
+  "export_cancelled": "Export cancelled"
 }

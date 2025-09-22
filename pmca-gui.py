@@ -153,6 +153,88 @@ class StartSenserShellTask(StartPlatformShellTask):
   senserShellCommand(complete=lambda dev: self.launchShell(SenserPlatformBackend(dev)))
 
 
+class ExportBackupTask(BackgroundTask):
+ """Task to export backup data from camera"""
+ def doBefore(self):
+  self.ui.exportBackupButton.config(state=DISABLED)
+
+ def do(self, arg):
+  try:
+   print(_('exporting_backup_data'))
+   from pmca.commands.usb import senserShellCommand
+   from pmca.platform.backend.senser import SenserPlatformBackend
+   from pmca.platform.backup import BackupPatchDataInterface
+   from tkinter.filedialog import asksaveasfilename
+   import json
+   
+   # Use senserShellCommand to switch to service mode and get device
+   def complete(dev):
+    backend = SenserPlatformBackend(dev)
+    try:
+     # Get backup interface
+     backupInterface = BackupPatchDataInterface(backend)
+     
+     # Read all backup properties
+     print(_('reading_backup_data'))
+     backupData = {}
+     for propId, prop in backupInterface.backup.listProperties():
+      propKey = f"0x{propId:08x}"
+      backupData[propKey] = {
+       'id': propId,
+       'attr': prop.attr,
+       'data': list(prop.data) if prop.data else [],
+       'resetData': list(prop.resetData) if prop.resetData else None
+      }
+     
+     # Show save dialog in main thread
+     def showSaveDialog():
+      return asksaveasfilename(
+       defaultextension='.json',
+       filetypes=[(_('json_files'), '*.json'), (_('all_files'), '*.*')],
+       title=_('save_backup_data')
+      )
+     
+     # Get save path from main thread
+     import threading
+     result = {}
+     event = threading.Event()
+     
+     def getSavePath():
+      result['path'] = showSaveDialog()
+      event.set()
+     
+     # Run save dialog in main thread
+     self.ui.master.after(0, getSavePath)
+     event.wait()
+     
+     if result.get('path'):
+      # Save backup data to file
+      print(_('saving_backup_file'))
+      with open(result['path'], 'w', encoding='utf-8') as f:
+       json.dump(backupData, f, indent=2, ensure_ascii=False)
+      
+      print(_('backup_export_success', filename=os.path.basename(result['path'])))
+      print(_('total_properties_exported', count=len(backupData)))
+     else:
+      print(_('export_cancelled'))
+      
+    except Exception as e:
+     print(f"Error during backup export: {e}")
+     import traceback
+     traceback.print_exc()
+   
+   # Start the service mode shell command
+   senserShellCommand(complete=complete)
+   
+  except Exception as e:
+   print(f"Error: {e}")
+   import traceback
+   traceback.print_exc()
+
+ def doAfter(self, result):
+  self.ui.exportBackupButton.config(state=NORMAL)
+
+
 class TweakApplyTask(BackgroundTask):
  """Task to run TweakInterface.apply()"""
  def doBefore(self):
@@ -328,6 +410,9 @@ class UpdaterShellFrame(UiFrame):
 
   self.startSenserShellButton = Button(self, text=_('start_tweaking_service'), command=StartSenserShellTask(self).run, padding=5)
   self.startSenserShellButton.pack(fill=X, pady=(5, 0))
+
+  self.exportBackupButton = Button(self, text=_('export_backup_data'), command=ExportBackupTask(self).run, padding=5)
+  self.exportBackupButton.pack(fill=X, pady=(5, 0))
 
 
 class SettingsFrame(UiFrame):
