@@ -10,6 +10,7 @@ from pmca.platform.backend.senser import *
 from pmca.platform.backend.usb import *
 from pmca.platform.tweaks import *
 from pmca.ui import *
+from pmca.i18n import i18n_manager, _
 
 if getattr(sys, 'frozen', False):
  from frozenversion import version
@@ -131,7 +132,7 @@ class StartPlatformShellTask(BackgroundTask):
    root.run(lambda: root.after(0, lambda: TweakDialog(root, tweaks, endFlag)))
    endFlag.wait()
   else:
-   print('No tweaks available')
+   print(_('no_tweaks_available'))
 
   backend.stop()
 
@@ -159,7 +160,7 @@ class TweakApplyTask(BackgroundTask):
 
  def do(self, arg):
   try:
-   print('Applying tweaks...')
+   print(_('applying_tweaks'))
    self.ui.tweakInterface.apply()
   except Exception:
    traceback.print_exc()
@@ -181,12 +182,13 @@ class MainUi(UiRoot):
   tabs = Notebook(self, padding=5)
   tabs.pack(fill=X)
 
-  tabs.add(InfoFrame(self, padding=10), text='Camera info')
-  tabs.add(InstallerFrame(self, padding=10), text='Install app')
-  tabs.add(UpdaterShellFrame(self, padding=10), text='Tweaks')
-  tabs.add(FirmwareFrame(self, padding=10), text='Update firmware')
+  tabs.add(InfoFrame(self, padding=10), text=_('camera_info'))
+  tabs.add(InstallerFrame(self, padding=10), text=_('install_app'))
+  tabs.add(UpdaterShellFrame(self, padding=10), text=_('tweaks'))
+  tabs.add(FirmwareFrame(self, padding=10), text=_('update_firmware'))
+  tabs.add(SettingsFrame(self, padding=10), text=_('settings'))
 
-  docsLink = Label(self, text='Camera compatibility', foreground='blue', cursor='hand2')
+  docsLink = Label(self, text=_('camera_compatibility'), foreground='blue', cursor='hand2')
   docsLink.bind('<Button-1>', lambda e: webbrowser.open_new(config.docsUrl + '/devices.html'))
   docsLink.pack(pady=(0, 5))
 
@@ -206,12 +208,22 @@ class MainUi(UiRoot):
   for stream in ['stdout', 'stderr']:
    setattr(sys, stream, PrintRedirector(lambda str: self.run(lambda: self.log(str)), getattr(sys, stream)))
 
+ def refresh_ui(self):
+  """Refresh UI text with current language"""
+  # Update window title (keep original for now)
+  # self.title('OpenMemories: pmca-gui' + (' ' + version if version else ''))
+  
+  # Update tab text - this requires recreating the notebook or updating tab text
+  # For now, we'll show a message that restart is needed
+  from tkinter import messagebox
+  messagebox.showinfo(_("settings"), _("restart_to_apply_changes"))
+
 
 class InfoFrame(UiFrame):
  def __init__(self, parent, **kwargs):
   UiFrame.__init__(self, parent, **kwargs)
 
-  self.infoButton = Button(self, text='Get camera info', command=InfoTask(self).run, padding=5)
+  self.infoButton = Button(self, text=_('get_camera_info'), command=InfoTask(self).run, padding=5)
   self.infoButton.pack(fill=X)
 
 
@@ -225,7 +237,7 @@ class InstallerFrame(UiFrame):
   self.modeVar = IntVar(value=self.MODE_APP)
 
   appFrame = Labelframe(self, padding=5)
-  appFrame['labelwidget'] = Radiobutton(appFrame, text='Select an app from the app list', variable=self.modeVar, value=self.MODE_APP)
+  appFrame['labelwidget'] = Radiobutton(appFrame, text=_('select_app_from_list'), variable=self.modeVar, value=self.MODE_APP)
   appFrame.columnconfigure(0, weight=1)
   appFrame.pack(fill=X)
 
@@ -234,25 +246,25 @@ class InstallerFrame(UiFrame):
   self.appCombo.grid(row=0, column=0, sticky=W+E)
   self.setAppList([])
 
-  self.appLoadButton = Button(appFrame, text='Refresh', command=AppLoadTask(self).run)
+  self.appLoadButton = Button(appFrame, text=_('refresh'), command=AppLoadTask(self).run)
   self.appLoadButton.grid(row=0, column=1)
 
-  appListLink = Label(appFrame, text='Source', foreground='blue', cursor='hand2')
+  appListLink = Label(appFrame, text=_('source'), foreground='blue', cursor='hand2')
   appListLink.bind('<Button-1>', lambda e: webbrowser.open_new('https://github.com/' + config.githubAppListUser + '/' + config.githubAppListRepo))
   appListLink.grid(columnspan=2, sticky=W)
 
   apkFrame = Labelframe(self, padding=5)
-  apkFrame['labelwidget'] = Radiobutton(apkFrame, text='Select an apk', variable=self.modeVar, value=self.MODE_APK)
+  apkFrame['labelwidget'] = Radiobutton(apkFrame, text=_('select_apk'), variable=self.modeVar, value=self.MODE_APK)
   apkFrame.columnconfigure(0, weight=1)
   apkFrame.pack(fill=X)
 
   self.apkFile = Entry(apkFrame)
   self.apkFile.grid(row=0, column=0, sticky=W+E)
 
-  self.apkSelectButton = Button(apkFrame, text='Open apk...', command=self.openApk)
+  self.apkSelectButton = Button(apkFrame, text=_('open_apk'), command=self.openApk)
   self.apkSelectButton.grid(row=0, column=1)
 
-  self.installButton = Button(self, text='Install selected app', command=InstallTask(self).run, padding=5)
+  self.installButton = Button(self, text=_('install_selected_app'), command=InstallTask(self).run, padding=5)
   self.installButton.pack(fill=X, pady=(5, 0))
 
   self.run(AppLoadTask(self).run)
@@ -261,7 +273,7 @@ class InstallerFrame(UiFrame):
   return self.modeVar.get()
 
  def openApk(self):
-  fn = askopenfilename(filetypes=[('Apk files', '.apk'), ('All files', '.*')])
+  fn = askopenfilename(filetypes=[(_('apk_files'), '.apk'), (_('all_files'), '.*')])
   if fn:
    self.apkFile.delete(0, END)
    self.apkFile.insert(0, fn)
@@ -285,20 +297,20 @@ class FirmwareFrame(UiFrame):
   UiFrame.__init__(self, parent, **kwargs)
 
   datFrame = Labelframe(self, padding=5)
-  datFrame['labelwidget'] = Label(datFrame, text='Firmware file')
+  datFrame['labelwidget'] = Label(datFrame, text=_('firmware_file'))
   datFrame.pack(fill=X)
 
   self.datFile = Entry(datFrame)
   self.datFile.pack(side=LEFT, fill=X, expand=True)
 
-  self.datSelectButton = Button(datFrame, text='Open...', command=self.openDat)
+  self.datSelectButton = Button(datFrame, text=_('open'), command=self.openDat)
   self.datSelectButton.pack()
 
-  self.fwUpdateButton = Button(self, text='Update firmware', command=FirmwareUpdateTask(self).run, padding=5)
+  self.fwUpdateButton = Button(self, text=_('update_firmware'), command=FirmwareUpdateTask(self).run, padding=5)
   self.fwUpdateButton.pack(fill=X, pady=(5, 0))
 
  def openDat(self):
-  fn = askopenfilename(filetypes=[('Firmware files', '.dat'), ('All files', '.*')])
+  fn = askopenfilename(filetypes=[(_('firmware_files'), '.dat'), (_('all_files'), '.*')])
   if fn:
    self.datFile.delete(0, END)
    self.datFile.insert(0, fn)
@@ -311,28 +323,63 @@ class UpdaterShellFrame(UiFrame):
  def __init__(self, parent, **kwargs):
   UiFrame.__init__(self, parent, **kwargs)
 
-  self.startUpdaterShellButton = Button(self, text='Start tweaking (updater mode)', command=StartUpdaterShellTask(self).run, padding=5)
+  self.startUpdaterShellButton = Button(self, text=_('start_tweaking_updater'), command=StartUpdaterShellTask(self).run, padding=5)
   self.startUpdaterShellButton.pack(fill=X)
 
-  self.startSenserShellButton = Button(self, text='Start tweaking (service mode)', command=StartSenserShellTask(self).run, padding=5)
+  self.startSenserShellButton = Button(self, text=_('start_tweaking_service'), command=StartSenserShellTask(self).run, padding=5)
   self.startSenserShellButton.pack(fill=X, pady=(5, 0))
+
+
+class SettingsFrame(UiFrame):
+ def __init__(self, parent, **kwargs):
+  UiFrame.__init__(self, parent, **kwargs)
+  
+  # Language settings section
+  langFrame = Labelframe(self, padding=10)
+  langFrame['labelwidget'] = Label(langFrame, text=_('language_settings'))
+  langFrame.pack(fill=X, pady=(0, 10))
+
+  Label(langFrame, text=_('select_language')).pack(anchor=W, pady=(0, 5))
+  
+  self.langVar = StringVar(value=i18n_manager.get_language())
+  
+  # Create radio buttons for each supported language
+  for lang_code, lang_name in i18n_manager.get_supported_languages().items():
+   rb = Radiobutton(langFrame, text=lang_name, variable=self.langVar, value=lang_code, command=self.on_language_change)
+   rb.pack(anchor=W, pady=2)
+  
+  # Apply button
+  self.applyButton = Button(self, text=_('apply'), command=self.apply_settings, padding=5)
+  self.applyButton.pack(fill=X, pady=(10, 0))
+  
+ def on_language_change(self):
+  """Called when language selection changes"""
+  pass
+  
+ def apply_settings(self):
+  """Apply the selected settings"""
+  new_language = self.langVar.get()
+  if i18n_manager.set_language(new_language):
+   # Show message that restart is needed
+   from tkinter import messagebox
+   messagebox.showinfo(_("settings"), _("restart_required"))
 
 
 class TweakDialog(UiDialog):
  def __init__(self, parent, tweakInterface, endFlag=None):
   self.tweakInterface = tweakInterface
   self.endFlag = endFlag
-  UiDialog.__init__(self, parent, "Tweaks")
+  UiDialog.__init__(self, parent, _("tweaks"))
 
  def body(self, top):
   tweakFrame = Labelframe(top, padding=5)
-  tweakFrame['labelwidget'] = Label(tweakFrame, text='Tweaks')
+  tweakFrame['labelwidget'] = Label(tweakFrame, text=_('tweaks'))
   tweakFrame.pack(fill=X)
 
   self.boxFrame = Frame(tweakFrame)
   self.boxFrame.pack(fill=BOTH, expand=True)
 
-  self.applyButton = Button(top, text='Apply', command=TweakApplyTask(self).run, padding=5)
+  self.applyButton = Button(top, text=_('apply'), command=TweakApplyTask(self).run, padding=5)
   self.applyButton.pack(fill=X)
 
   self.updateStatus()
@@ -357,6 +404,58 @@ class TweakDialog(UiDialog):
   UiDialog.cancel(self, event)
   if self.endFlag:
    self.endFlag.set()
+
+
+class SettingsDialog(UiDialog):
+ def __init__(self, parent):
+  UiDialog.__init__(self, parent, _("language_settings"))
+
+ def body(self, top):
+  # Language selection frame
+  langFrame = Labelframe(top, padding=10)
+  langFrame['labelwidget'] = Label(langFrame, text=_("select_language"))
+  langFrame.pack(fill=X, pady=(0, 10))
+
+  self.langVar = StringVar(value=i18n_manager.get_language())
+  
+  # Create radio buttons for each supported language
+  for lang_code, lang_name in i18n_manager.get_supported_languages().items():
+   rb = Radiobutton(langFrame, text=lang_name, variable=self.langVar, value=lang_code)
+   rb.pack(anchor=W, pady=2)
+
+ def apply(self):
+  # Apply language change
+  new_language = self.langVar.get()
+  if i18n_manager.set_language(new_language):
+   # Refresh the main window to apply new language
+   self.parent.master.refresh_ui()
+  return True
+
+
+class SettingsDialog(UiDialog):
+ def __init__(self, parent):
+  UiDialog.__init__(self, parent, _("language_settings"))
+
+ def body(self, top):
+  # Language selection frame
+  langFrame = Labelframe(top, padding=10)
+  langFrame['labelwidget'] = Label(langFrame, text=_("select_language"))
+  langFrame.pack(fill=X, pady=(0, 10))
+
+  self.langVar = StringVar(value=i18n_manager.get_language())
+  
+  # Create radio buttons for each supported language
+  for lang_code, lang_name in i18n_manager.get_supported_languages().items():
+   rb = Radiobutton(langFrame, text=lang_name, variable=self.langVar, value=lang_code)
+   rb.pack(anchor=W, pady=2)
+
+ def apply(self):
+  # Apply language change
+  new_language = self.langVar.get()
+  if i18n_manager.set_language(new_language):
+   # Refresh the main window to apply new language
+   self.parent.master.refresh_ui()
+  return True
 
 
 def main():
